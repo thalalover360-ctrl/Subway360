@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Subway 360 - Characters</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .card-container {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .char-card {
+      background: #1f2230;
+      padding: 16px;
+      border-radius: 12px;
+      width: 90px;
+      text-align: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.1s;
+    }
+    .char-card:active {
+      transform: scale(0.95);
+    }
+    .char-card.active {
+      border-color: #ff5500;
+      background: #282c3f;
+    }
+    .preview {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 10px;
+      border-radius: 8px;
+    }
+    .char-card p {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="center-screen">
+    <h2>CHOOSE RUNNER</h2>
+    <div class="card-container">
+      <div class="char-card active" onclick="selectChar('neon', this)">
+        <div class="preview" style="background:#00ff88;"></div>
+        <p>Neon</p>
+      </div>
+      <div class="char-card" onclick="selectChar('blaze', this)">
+        <div class="preview" style="background:#ff3300;"></div>
+        <p>Blaze</p>
+      </div>
+      <div class="char-card" onclick="selectChar('cyber', this)">
+        <div class="preview" style="background:#00bbff;"></div>
+        <p>Cyber</p>
+      </div>
+    </div>
+    <a href="game.html" class="btn">EQUIP & PLAY</a>
+    <a href="index.html" class="btn btn-secondary">BACK</a>
+  </div>
+
+  <script>
+    function selectChar(id, el) {
+      localStorage.setItem('selectedCharacter', id);
+      document.querySelectorAll('.char-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    const current = localStorage.getItem('selectedCharacter') || 'neon';
+    document.querySelectorAll('.char-card').forEach(c => {
+      c.classList.remove('active');
+      if (c.querySelector('p').innerText.toLowerCase() === current) {
+        c.classList.add('active');
+      }
+    });
+  </script>
+</body>
+</html>
