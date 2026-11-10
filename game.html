@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Subway 360 - Run</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    /* In-game HUD */
+    #hud {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hud-badge {
+      background: rgba(10, 12, 20, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .score-badge { color: #fff; }
+    .coin-badge { color: #ffd700; border-color: rgba(255, 215, 0, 0.4); }
+
+    /* Game Over Modal */
+    #gameover {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(13, 15, 24, 0.95);
+      border: 2px solid #ff3344;
+      border-radius: 18px;
+      padding: 24px 28px;
+      text-align: center;
+      width: 85%;
+      max-width: 340px;
+      z-index: 50;
+      box-shadow: 0 0 30px rgba(255, 51, 68, 0.35);
+    }
+
+    .gameover-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #ff3344;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin: 8px 0;
+      padding: 6px 12px;
+      background: #171926;
+      border-radius: 8px;
+    }
+
+    .stat-row span:last-child {
+      color: #fff;
+    }
+
+    .gameover-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- In-game Heads Up Display -->
+  <div id="hud">
+    <div class="hud-badge score-badge">SCORE: <span id="scoreText">0</span></div>
+    <div class="hud-badge coin-badge">🪙 <span id="coinText">0</span></div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameover">
+    <div class="gameover-title">CRASHED!</div>
+    <div class="stat-row">
+      <span>Score</span>
+      <span id="finalScore">0</span>
+    </div>
+    <div class="stat-row">
+      <span>Coins Looted</span>
+      <span style="color:#ffd700;">+🪙 <span id="finalCoins">0</span></span>
+    </div>
+
+    <div class="gameover-actions">
+      <button class="btn" onclick="location.reload()">TRY AGAIN</button>
+      <a href="shop.html" class="btn btn-secondary">SHOP / UPGRADE</a>
+      <a href="index.html" class="btn btn-secondary" style="background:transparent; border:1px solid #333845;">MAIN MENU</a>
+    </div>
+  </div>
+
+  <!-- Game Engine Modules (Order Matters) -->
+  <script src="js/characters.js"></script>
+  <script src="js/subwayView.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
