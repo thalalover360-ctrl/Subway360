@@ -3,78 +3,371 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Subway 360 - Characters</title>
+  <title>Subway 360 - Shop & Records</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    .card-container {
+    body {
+      background: radial-gradient(circle at center, #1b2038 0%, #08090f 100%);
       display: flex;
-      gap: 14px;
-      margin-bottom: 24px;
+      flex-direction: column;
+      overflow-y: auto;
+      touch-action: pan-y;
     }
-    .char-card {
-      background: #1f2230;
-      padding: 16px;
+
+    /* Top Stats Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      border-bottom: 2px solid #2a314d;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #161926;
+      border: 1px solid #3d4669;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #ffcc00;
+    }
+
+    .badge.lvl { color: #00e5ff; border-color: #00e5ff; }
+    .badge.rec { color: #ff007f; border-color: #ff007f; }
+
+    /* 3D Character Viewport */
+    #preview-container {
+      width: 100%;
+      height: 250px;
+      position: relative;
+    }
+    #preview-container canvas {
+      outline: none;
+    }
+    .char-name-tag {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.3rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 16px;
       border-radius: 12px;
-      width: 90px;
+    }
+
+    /* Shop Content Area */
+    .shop-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Character Selection Grid */
+    .section-title {
+      font-size: 0.95rem;
+      color: #8b9bb4;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .char-card {
+      background: #151826;
+      border: 2px solid #282f49;
+      border-radius: 12px;
+      padding: 10px 8px;
       text-align: center;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: transform 0.1s;
+      position: relative;
     }
-    .char-card:active {
-      transform: scale(0.95);
+
+    .char-card.selected {
+      border-color: #00ff88;
+      box-shadow: 0 0 10px rgba(0,255,136,0.3);
     }
-    .char-card.active {
-      border-color: #ff5500;
-      background: #282c3f;
+
+    .char-card .color-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin: 0 auto 6px;
     }
-    .preview {
-      width: 44px;
-      height: 44px;
-      margin: 0 auto 10px;
-      border-radius: 8px;
+
+    .char-card h4 {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
     }
-    .char-card p {
-      font-size: 0.9rem;
-      font-weight: 600;
+
+    .char-card .status {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #aaa;
+    }
+
+    /* Mystery Box Widget */
+    .box-card {
+      background: linear-gradient(135deg, #2b1f47 0%, #151826 100%);
+      border: 2px dashed #a855f7;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .box-info h3 {
+      font-size: 1.1rem;
+      color: #d8b4fe;
+    }
+
+    .box-info p {
+      font-size: 0.8rem;
+      color: #a8a29e;
+    }
+
+    /* Bottom Actions */
+    .bottom-bar {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #08090f;
+      border-top: 1px solid #1f2438;
+      position: sticky;
+      bottom: 0;
+    }
+
+    .bottom-bar button, .bottom-bar a {
+      flex: 1;
+      text-align: center;
+      margin: 0;
     }
   </style>
 </head>
 <body>
-  <div class="center-screen">
-    <h2>CHOOSE RUNNER</h2>
-    <div class="card-container">
-      <div class="char-card active" onclick="selectChar('neon', this)">
-        <div class="preview" style="background:#00ff88;"></div>
-        <p>Neon</p>
+
+  <!-- Top Realtime Badges -->
+  <div class="top-bar">
+    <div class="badge lvl">LVL <span id="playerLvl">1</span></div>
+    <div class="badge rec">BEST: <span id="highScore">0</span></div>
+    <div class="badge">🪙 <span id="coinBalance">250</span></div>
+  </div>
+
+  <!-- Live 3D Spinning Character Viewport -->
+  <div id="preview-container">
+    <div class="char-name-tag" id="previewName">NEON RUNNER</div>
+  </div>
+
+  <div class="shop-body">
+    <!-- Character Select -->
+    <div class="section-title">Select & Unlock Runners</div>
+    <div class="char-grid">
+      <div class="char-card selected" onclick="pickCharacter('neon', 0, 0x00ff88, 0x111111, 'NEON RUNNER')">
+        <div class="color-dot" style="background:#00ff88;"></div>
+        <h4>Neon</h4>
+        <div class="status" id="st-neon">EQUIPPED</div>
       </div>
-      <div class="char-card" onclick="selectChar('blaze', this)">
-        <div class="preview" style="background:#ff3300;"></div>
-        <p>Blaze</p>
+      <div class="char-card" onclick="pickCharacter('blaze', 300, 0xff3300, 0xffcc00, 'BLAZE FLASH')">
+        <div class="color-dot" style="background:#ff3300;"></div>
+        <h4>Blaze</h4>
+        <div class="status" id="st-blaze">🪙 300</div>
       </div>
-      <div class="char-card" onclick="selectChar('cyber', this)">
-        <div class="preview" style="background:#00bbff;"></div>
-        <p>Cyber</p>
+      <div class="char-card" onclick="pickCharacter('cyber', 600, 0x00bbff, 0xff00cc, 'CYBER PROTO')">
+        <div class="color-dot" style="background:#00bbff;"></div>
+        <h4>Cyber</h4>
+        <div class="status" id="st-cyber">🪙 600</div>
       </div>
     </div>
-    <a href="game.html" class="btn">EQUIP & PLAY</a>
+
+    <!-- Action Button for Selected -->
+    <button id="actionBtn" class="btn" style="width:100%;" onclick="handleAction()">EQUIPPED</button>
+
+    <!-- Mystery Box Visual Card -->
+    <div class="box-card">
+      <div class="box-info">
+        <h3>🎁 Mystery Super Box</h3>
+        <p>Win 100-500 coins or skins!</p>
+      </div>
+      <button class="btn" style="padding:10px 16px; font-size:0.9rem;" onclick="openMysteryBox()">OPEN (🪙 100)</button>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="bottom-bar">
     <a href="index.html" class="btn btn-secondary">BACK</a>
+    <a href="game.html" class="btn">PLAY</a>
   </div>
 
   <script>
-    function selectChar(id, el) {
-      localStorage.setItem('selectedCharacter', id);
-      document.querySelectorAll('.char-card').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
+    // --- Data Storage Init ---
+    let coins = parseInt(localStorage.getItem('subway_coins') || '250');
+    let highscore = parseInt(localStorage.getItem('subway_highscore') || '0');
+    let unlocked = JSON.parse(localStorage.getItem('subway_unlocked') || '["neon"]');
+    let equipped = localStorage.getItem('selectedCharacter') || 'neon';
+
+    let currentSelected = { id: 'neon', cost: 0, name: 'NEON RUNNER', bodyCol: 0x00ff88, headCol: 0x111111 };
+
+    function syncUI() {
+      document.getElementById('coinBalance').innerText = coins;
+      document.getElementById('highScore').innerText = highscore;
+      document.getElementById('playerLvl').innerText = Math.floor(highscore / 500) + 1;
+
+      // Update card statuses
+      ['neon', 'blaze', 'cyber'].forEach(id => {
+        const el = document.getElementById('st-' + id);
+        if (id === equipped) {
+          el.innerText = 'EQUIPPED';
+          el.style.color = '#00ff88';
+        } else if (unlocked.includes(id)) {
+          el.innerText = 'OWNED';
+          el.style.color = '#38bdf8';
+        }
+      });
+
+      // Update main Action button state
+      const btn = document.getElementById('actionBtn');
+      if (currentSelected.id === equipped) {
+        btn.innerText = 'EQUIPPED';
+        btn.disabled = true;
+        btn.className = 'btn btn-secondary';
+      } else if (unlocked.includes(currentSelected.id)) {
+        btn.innerText = 'EQUIP RUNNER';
+        btn.disabled = false;
+        btn.className = 'btn';
+      } else {
+        btn.innerText = 'UNLOCK FOR 🪙 ' + currentSelected.cost;
+        btn.disabled = false;
+        btn.className = 'btn';
+      }
+
+      localStorage.setItem('subway_coins', coins);
+      localStorage.setItem('subway_unlocked', JSON.stringify(unlocked));
+      localStorage.setItem('selectedCharacter', equipped);
     }
 
-    const current = localStorage.getItem('selectedCharacter') || 'neon';
-    document.querySelectorAll('.char-card').forEach(c => {
-      c.classList.remove('active');
-      if (c.querySelector('p').innerText.toLowerCase() === current) {
-        c.classList.add('active');
+    // --- 3D Character Preview with Three.js ---
+    let scene, camera, renderer, previewMesh;
+
+    function init3DPreview() {
+      const container = document.getElementById('preview-container');
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+      camera.position.set(0, 1.2, 3.8);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
+      scene.add(light);
+      const dLight = new THREE.DirectionalLight(0xffffff, 1);
+      dLight.position.set(2, 4, 3);
+      scene.add(dLight);
+
+      update3DModel(0x00ff88, 0x111111);
+      animate();
+    }
+
+    function update3DModel(bodyHex, headHex) {
+      if (previewMesh) scene.remove(previewMesh);
+
+      previewMesh = new THREE.Group();
+      // Body
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 1.1, 0.5),
+        new THREE.MeshLambertMaterial({ color: bodyHex })
+      );
+      body.position.y = 0.55;
+      previewMesh.add(body);
+
+      // Head
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.5, 0.5),
+        new THREE.MeshLambertMaterial({ color: headHex })
+      );
+      head.position.y = 1.4;
+      previewMesh.add(head);
+
+      previewMesh.position.y = -0.5;
+      scene.add(previewMesh);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (previewMesh) {
+        previewMesh.rotation.y += 0.02; // Smooth 360 spin
       }
-    });
+      renderer.render(scene, camera);
+    }
+
+    // --- User Actions ---
+    function pickCharacter(id, cost, bCol, hCol, name) {
+      currentSelected = { id, cost, name, bodyCol: bCol, headCol: hCol };
+      document.getElementById('previewName').innerText = name;
+      update3DModel(bCol, hCol);
+
+      document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      syncUI();
+    }
+
+    function handleAction() {
+      if (unlocked.includes(currentSelected.id)) {
+        equipped = currentSelected.id;
+      } else {
+        if (coins >= currentSelected.cost) {
+          coins -= currentSelected.cost;
+          unlocked.push(currentSelected.id);
+          equipped = currentSelected.id;
+          alert('Unlocked ' + currentSelected.name + '!');
+        } else {
+          alert('Not enough coins! Run more to collect coins.');
+        }
+      }
+      syncUI();
+    }
+
+    function openMysteryBox() {
+      if (coins < 100) {
+        alert('Needs 100 coins to open mystery box!');
+        return;
+      }
+      coins -= 100;
+      const rewards = [150, 200, 300, 50, 500];
+      const win = rewards[Math.floor(Math.random() * rewards.length)];
+      coins += win;
+      alert('🎁 Box Opened! You won 🪙 ' + win + ' Coins!');
+      syncUI();
+    }
+
+    window.onload = () => {
+      init3DPreview();
+      syncUI();
+    };
   </script>
 </body>
 </html>
